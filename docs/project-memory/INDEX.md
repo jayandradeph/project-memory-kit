@@ -7,6 +7,7 @@ This index is the routing layer for project knowledge. Read only the sections re
 - [Project context](PROJECT-CONTEXT.md): purpose, stack, architecture, commands, and important paths.
 - [Do's and don'ts](DOS-AND-DONTS.md): project-wide behavioral rules.
 - [Memory maintenance](MAINTENANCE.md): freshness, superseding, archiving, and verification.
+- [Autonomous Codex learning](../integration/CODEX-AUTONOMOUS-LEARNING.md): automatic recall, reflection, consolidation, trust, and safety boundaries.
 
 ## Implementation practices
 
@@ -34,3 +35,4 @@ This index is the routing layer for project knowledge. Read only the sections re
 - Environment, dependency, deployment, or feature-flag change: read configuration and relevant decisions.
 - Repeated or unfamiliar failure: search known solutions by exact error text, component, dependency, and symptom.
 - Cross-cutting or irreversible choice: search decisions before proposing a new one.
+- User correction or newly verified reusable learning: run the project-memory learner, update existing guidance first, and retain only evidence-backed knowledge.

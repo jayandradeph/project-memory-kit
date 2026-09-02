@@ -2,6 +2,8 @@
 
 This repository uses Git-tracked project memory to prevent context loss and context rot.
 
+Codex project hooks automatically load the memory map, retrieve relevant records, require one evidence-gated learning pass before stopping, and validate memory at session end. The hook-triggered pass uses `.agents/skills/project-memory-learner/SKILL.md`. Hooks assist the workflow; reviewed repository files remain authoritative.
+
 ## Before meaningful work
 
 1. Read `docs/project-memory/INDEX.md`.

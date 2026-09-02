@@ -1,0 +1,60 @@
+{
+  "description": "Project-scoped autonomous recall, reflection, and memory validation.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/tools/project_memory_loop.py\" hook",
+            "commandWindows": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$projectRoot = git rev-parse --show-toplevel; python (Join-Path $projectRoot 'tools/project_memory_loop.py') hook\"",
+            "timeout": 10,
+            "additionalContextLimit": 5000,
+            "statusMessage": "Loading project memory"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/tools/project_memory_loop.py\" hook",
+            "commandWindows": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$projectRoot = git rev-parse --show-toplevel; python (Join-Path $projectRoot 'tools/project_memory_loop.py') hook\"",
+            "timeout": 10,
+            "additionalContextLimit": 5000,
+            "statusMessage": "Retrieving relevant project memory"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/tools/project_memory_loop.py\" hook",
+            "commandWindows": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$projectRoot = git rev-parse --show-toplevel; python (Join-Path $projectRoot 'tools/project_memory_loop.py') hook\"",
+            "timeout": 10,
+            "statusMessage": "Reflecting on durable project learning"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/tools/project_memory_loop.py\" hook",
+            "commandWindows": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$projectRoot = git rev-parse --show-toplevel; python (Join-Path $projectRoot 'tools/project_memory_loop.py') hook\"",
+            "timeout": 3,
+            "statusMessage": "Checking project memory"
+          }
+        ]
+      }
+    ]
+  }
+}

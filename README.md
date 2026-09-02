@@ -7,13 +7,15 @@ The kit is designed to reduce two different failures:
 - **Context loss:** a new session does not know what previous sessions learned.
 - **Context rot:** stored guidance becomes stale, duplicated, contradictory, or impossible to verify.
 
-The repository works without a database, hosted service, account, or API key. Obsidian and Graphify are optional additions.
+The repository works without a database, hosted service, account, or API key. For Codex, project-local hooks add a Hermes-style autonomous recall and learning loop while keeping the reviewed files in Git authoritative. Obsidian and Graphify are optional additions.
 
 ## What is included
 
 - A concise [`AGENTS.md`](AGENTS.md) that enforces a memory-first workflow.
 - Structured project memory for UI, validation, security, and configuration practices.
 - Decision and known-solution templates with freshness and verification metadata.
+- Project-local hooks for automatic startup recall, prompt-time retrieval, end-of-task reflection, and validation.
+- A guarded learner skill that can curate corrections, verified fixes, decisions, and repeatable project procedures.
 - A standard-library Python validator that checks structure, metadata, links, placeholders, and likely secrets.
 - Cross-platform tests and GitHub Actions validation.
 - Optional guides for Obsidian and Graphify.
@@ -31,7 +33,14 @@ The repository works without a database, hosted service, account, or API key. Ob
 
    On Windows, `py -3 tools/memory_check.py --strict` works as an alternative.
 
-5. Ask your coding agent:
+5. In Codex, review and trust the project hooks with `/hooks`, then start a new session in the repository.
+6. Test the autonomous loop:
+
+   ```bash
+   python tools/project_memory_loop.py simulate
+   ```
+
+7. Ask your coding agent:
 
    > Read AGENTS.md and summarize the active project memory before making changes.
 
@@ -54,19 +63,24 @@ After installation, review the generated project context and run:
 
 ```bash
 python tools/memory_check.py --strict
+python tools/project_memory_loop.py simulate
 ```
+
+Codex asks each collaborator to review the repository's hook commands once on that machine. Open `/hooks`, inspect the commands, and trust them. This is intentionally not bypassed by the installer.
+
+See [`docs/integration/CODEX-AUTONOMOUS-LEARNING.md`](docs/integration/CODEX-AUTONOMOUS-LEARNING.md) for the complete learning loop and safety boundaries.
 
 ## Daily workflow
 
 ```text
 New task
-  -> read AGENTS.md
-  -> open the memory index
-  -> read only relevant practices and prior solutions
+  -> SessionStart loads the project-memory map
+  -> UserPromptSubmit retrieves relevant records
   -> inspect current code and tests
   -> implement and verify
-  -> update durable memory
-  -> supersede or archive stale guidance
+  -> Stop triggers one evidence-gated learning pass
+  -> update durable memory or explicitly record no durable learning
+  -> SessionEnd validates the memory structure
 ```
 
 Chat history is never the source of truth. Generated indexes are never the source of truth. The repository remains reviewable through normal pull requests.
@@ -108,6 +122,7 @@ Run all checks locally:
 
 ```bash
 python tools/memory_check.py --strict
+python tools/project_memory_loop.py simulate
 python -m unittest discover -s tests -v
 ```
 
@@ -117,11 +132,13 @@ The reusable GitHub Actions workflow validates memory on every push and pull req
 
 - Python 3.9 or newer; no third-party Python packages are required.
 - GitHub Actions, Windows, macOS, and Linux.
-- Codex automatically discovers `AGENTS.md`. Other coding agents can use the same memory if configured to read `AGENTS.md` and `docs/project-memory/INDEX.md` at the start of a task.
+- Codex automatically discovers `AGENTS.md`, project-local skills, and trusted project hooks. Other coding agents can use the same Git-tracked memory, but must be configured with equivalent lifecycle triggers if they do not understand Codex hooks.
 
 ## Reference documentation
 
 - [Codex custom instructions with AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md)
+- [Codex hooks](https://learn.chatgpt.com/docs/hooks)
+- [Codex skills](https://learn.chatgpt.com/docs/build-skills)
 - [Codex Model Context Protocol setup](https://learn.chatgpt.com/docs/extend/mcp)
 - [Obsidian Graph View](https://help.obsidian.md/plugins/graph)
 - [Graphify quickstart](https://www.graphiffy.com/docs)

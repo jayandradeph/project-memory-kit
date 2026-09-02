@@ -36,7 +36,7 @@ Obsidian may edit and visualize the same Markdown. Generated graphs and semantic
 - `python tools/memory_check.py --strict`
 - `python -m unittest discover -s tests -v`
 - GitHub Actions validation on Ubuntu, Windows, and macOS.
-- A fresh public clone completed validation and the full test suite on 2026-09-02.
+- Installer and validator tests exercise fresh target repositories without relying on machine-local memory.
 
 ## Supersession
 

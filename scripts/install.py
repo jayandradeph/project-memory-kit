@@ -12,13 +12,24 @@ from pathlib import Path
 
 COPY_PATHS = (
     "docs/project-memory",
+    "docs/integration/CODEX-AUTONOMOUS-LEARNING.md",
     "docs/integration/AGENTS-snippet.md",
     "docs/integrations/OBSIDIAN.md",
     "docs/integrations/GRAPHIFY.md",
     "tools/__init__.py",
     "tools/memory_check.py",
+    "tools/project_memory_loop.py",
+    ".agents/skills/project-memory-learner/SKILL.md",
+    ".codex/config.toml",
+    ".codex/hooks.json",
     ".github/workflows/project-memory.yml",
 )
+
+# Demonstration records prove the kit itself, but are not learning from the
+# target project and therefore must not leak into a project-scoped install.
+INSTALL_EXCLUDED_PATHS = {
+    "docs/project-memory/known-solutions/ERR-001-GIT-DUBIOUS-OWNERSHIP.md",
+}
 
 
 @dataclass
@@ -32,7 +43,14 @@ def source_files(kit_root: Path) -> list[Path]:
     for relative in COPY_PATHS:
         source = kit_root / relative
         if source.is_dir():
-            files.extend(sorted(path for path in source.rglob("*") if path.is_file()))
+            files.extend(
+                sorted(
+                    path
+                    for path in source.rglob("*")
+                    if path.is_file()
+                    and path.relative_to(kit_root).as_posix() not in INSTALL_EXCLUDED_PATHS
+                )
+            )
         elif source.is_file():
             files.append(source)
         else:
@@ -44,6 +62,13 @@ def render_content(source: Path, relative: Path, project_name: str) -> bytes:
     content = source.read_bytes()
     if relative.as_posix() == "docs/project-memory/PROJECT-CONTEXT.md":
         text = content.decode("utf-8").replace("[PROJECT NAME]", project_name)
+        return text.encode("utf-8")
+    if relative.as_posix() == "docs/project-memory/known-solutions/INDEX.md":
+        text = content.decode("utf-8")
+        text = text.replace(
+            "- [ERR-001: Git rejects a workspace as dubious ownership](ERR-001-GIT-DUBIOUS-OWNERSHIP.md)\n\n",
+            "",
+        )
         return text.encode("utf-8")
     return content
 

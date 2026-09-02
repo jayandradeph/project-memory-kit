@@ -13,6 +13,10 @@ Record knowledge when it is durable, non-obvious, reusable, and costly to redisc
 
 Do not record task narration, temporary debugging guesses, unreviewed opinions, or information immediately obvious from a single current file.
 
+The Codex `Stop` hook triggers the project-memory learner once before task completion. The learner must explicitly conclude that there is no durable project learning when the evidence gate does not pass. A hook trigger is not itself permission to retain the interaction.
+
+Create a project-local skill only for a repeatable, project-specific procedure that has succeeded at least twice or that the project owner explicitly asks to preserve. Skills remain subject to the same review, secret-safety, freshness, and supersession rules as memory documents.
+
 ## Freshness
 
 Every active practice, decision, and known solution has a `last_verified` date and applicability statement. Verification means checking the guidance against current code, tests, configuration, and dependency versions—not merely rereading it.

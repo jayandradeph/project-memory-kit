@@ -19,6 +19,16 @@ class InstallerTests(unittest.TestCase):
 
             self.assertIn(Path("AGENTS.md"), result.copied)
             self.assertTrue((target / "tools/memory_check.py").is_file())
+            self.assertTrue((target / "tools/project_memory_loop.py").is_file())
+            self.assertTrue((target / ".codex/hooks.json").is_file())
+            self.assertTrue((target / ".agents/skills/project-memory-learner/SKILL.md").is_file())
+            self.assertFalse(
+                (target / "docs/project-memory/known-solutions/ERR-001-GIT-DUBIOUS-OWNERSHIP.md").exists()
+            )
+            solutions_index = (
+                target / "docs/project-memory/known-solutions/INDEX.md"
+            ).read_text(encoding="utf-8")
+            self.assertNotIn("ERR-001-GIT-DUBIOUS-OWNERSHIP.md", solutions_index)
             self.assertFalse((target / ".project-memory-template").exists())
             context = (target / "docs/project-memory/PROJECT-CONTEXT.md").read_text(encoding="utf-8")
             self.assertIn("Example Project", context)

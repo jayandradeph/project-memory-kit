@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from dataclasses import dataclass, field
@@ -25,6 +26,9 @@ REQUIRED_PATHS = (
     "docs/project-memory/practices/CONFIGURATION.md",
     "docs/project-memory/decisions/INDEX.md",
     "docs/project-memory/known-solutions/INDEX.md",
+    ".codex/hooks.json",
+    ".agents/skills/project-memory-learner/SKILL.md",
+    "tools/project_memory_loop.py",
 )
 
 REQUIRED_METADATA = ("status", "last_verified", "applies_to", "owner")
@@ -43,6 +47,8 @@ NON_ACTIVE_STATUSES = {"draft", "proposed", "superseded", "archived"}
 MARKDOWN_LINK = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 TEMPLATE_TOKEN = re.compile(r"`\[[A-Z][A-Z0-9 _/.-]*\]`")
 RECORD_HEADING = re.compile(r"^#\s+((?:ADR|ERR)-\d+)\b", re.MULTILINE)
+SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+REQUIRED_HOOK_EVENTS = {"SessionStart", "UserPromptSubmit", "Stop", "SessionEnd"}
 
 SECRET_PATTERNS = (
     ("private key block", re.compile(r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY-----")),
@@ -116,6 +122,9 @@ def markdown_documents(root: Path) -> Iterable[Path]:
     docs = root / "docs"
     if docs.is_dir():
         yield from sorted(path for path in docs.rglob("*.md") if path.is_file())
+    skills = root / ".agents" / "skills"
+    if skills.is_dir():
+        yield from sorted(path for path in skills.rglob("*.md") if path.is_file())
 
 
 def validate_required_paths(root: Path, result: ValidationResult) -> None:
@@ -130,6 +139,73 @@ def validate_agents_contract(root: Path, result: ValidationResult) -> None:
         result.errors.append(
             "AGENTS.md: must direct agents to docs/project-memory/INDEX.md before meaningful work"
         )
+
+
+def validate_hooks(root: Path, result: ValidationResult) -> None:
+    hooks_path = root / ".codex" / "hooks.json"
+    if not hooks_path.is_file():
+        return
+    try:
+        payload = json.loads(read_text(hooks_path))
+    except json.JSONDecodeError as error:
+        result.errors.append(f".codex/hooks.json: invalid JSON: {error.msg}")
+        return
+
+    hooks = payload.get("hooks")
+    if not isinstance(hooks, dict):
+        result.errors.append(".codex/hooks.json: top-level 'hooks' must be an object")
+        return
+    missing = sorted(REQUIRED_HOOK_EVENTS - set(hooks))
+    if missing:
+        result.errors.append(f".codex/hooks.json: missing hook events: {', '.join(missing)}")
+
+    for event_name in sorted(REQUIRED_HOOK_EVENTS & set(hooks)):
+        groups = hooks[event_name]
+        if not isinstance(groups, list) or not groups:
+            result.errors.append(f".codex/hooks.json: {event_name} must contain at least one hook group")
+            continue
+        commands = [
+            hook
+            for group in groups
+            if isinstance(group, dict)
+            for hook in group.get("hooks", [])
+            if isinstance(hook, dict) and hook.get("type") == "command"
+        ]
+        if not commands:
+            result.errors.append(f".codex/hooks.json: {event_name} needs a command hook")
+            continue
+        for command in commands:
+            if "project_memory_loop.py" not in str(command.get("command", "")):
+                result.errors.append(f".codex/hooks.json: {event_name} must invoke project_memory_loop.py")
+            if not command.get("commandWindows"):
+                result.errors.append(f".codex/hooks.json: {event_name} needs commandWindows for portable installs")
+    for group in hooks.get("SessionEnd", []):
+        for command in group.get("hooks", []) if isinstance(group, dict) else []:
+            if isinstance(command, dict) and command.get("timeout", 0) > 3:
+                result.errors.append(".codex/hooks.json: SessionEnd command timeout cannot exceed 3 seconds")
+
+
+def validate_project_skills(root: Path, result: ValidationResult) -> None:
+    skills_root = root / ".agents" / "skills"
+    if not skills_root.is_dir():
+        return
+    for skill_path in sorted(skills_root.glob("*/SKILL.md")):
+        relative = skill_path.relative_to(root)
+        metadata = parse_front_matter(skill_path, result)
+        if metadata is None:
+            continue
+        name = metadata.get("name", "")
+        description = metadata.get("description", "")
+        if not name:
+            result.errors.append(f"{relative}: missing skill front-matter field 'name'")
+        elif not SKILL_NAME.fullmatch(name):
+            result.errors.append(f"{relative}: invalid skill name {name!r}")
+        elif name != skill_path.parent.name:
+            result.errors.append(
+                f"{relative}: skill name {name!r} must match directory {skill_path.parent.name!r}"
+            )
+        if not description:
+            result.errors.append(f"{relative}: missing skill front-matter field 'description'")
 
 
 def validate_metadata(root: Path, result: ValidationResult, max_age_days: int) -> None:
@@ -247,6 +323,8 @@ def validate_repository(root: Path, max_age_days: int = 180) -> ValidationResult
     result = ValidationResult()
     validate_required_paths(root, result)
     validate_agents_contract(root, result)
+    validate_hooks(root, result)
+    validate_project_skills(root, result)
     validate_metadata(root, result, max_age_days)
     validate_links(root, result)
     validate_index_coverage(root, result)

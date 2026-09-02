@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+import json
 from pathlib import Path
 
 from tools.memory_check import REQUIRED_PATHS, validate_repository
@@ -28,6 +29,26 @@ class MemoryCheckTests(unittest.TestCase):
                 path.write_text("Read docs/project-memory/INDEX.md before meaningful work.\n", encoding="utf-8")
             elif path.name == "INDEX.md" or relative == "README.md":
                 path.write_text("# Index\n", encoding="utf-8")
+            elif relative == ".codex/hooks.json":
+                hooks = {
+                    "hooks": {
+                        event: [{"hooks": [{
+                            "type": "command",
+                            "command": "python3 tools/project_memory_loop.py hook",
+                            "commandWindows": "python tools/project_memory_loop.py hook",
+                            "timeout": 3,
+                        }]}]
+                        for event in ("SessionStart", "UserPromptSubmit", "Stop", "SessionEnd")
+                    }
+                }
+                path.write_text(json.dumps(hooks), encoding="utf-8")
+            elif relative == ".agents/skills/project-memory-learner/SKILL.md":
+                path.write_text(
+                    "---\nname: project-memory-learner\ndescription: Test learner.\n---\n\n# Learner\n",
+                    encoding="utf-8",
+                )
+            elif relative == "tools/project_memory_loop.py":
+                path.write_text("# test fixture\n", encoding="utf-8")
             else:
                 path.write_text(VALID_FRONT_MATTER, encoding="utf-8")
         (root / ".project-memory-template").write_text("test", encoding="utf-8")
@@ -59,6 +80,29 @@ class MemoryCheckTests(unittest.TestCase):
             (root / "AGENTS.md").write_text("# Existing rules only\n", encoding="utf-8")
             result = validate_repository(root)
             self.assertTrue(any("must direct agents" in item for item in result.errors))
+
+    def test_hooks_require_all_learning_loop_events(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = self.make_repository(directory)
+            hooks_path = root / ".codex/hooks.json"
+            payload = json.loads(hooks_path.read_text(encoding="utf-8"))
+            del payload["hooks"]["Stop"]
+            hooks_path.write_text(json.dumps(payload), encoding="utf-8")
+            result = validate_repository(root)
+            self.assertTrue(any("missing hook events: Stop" in item for item in result.errors))
+
+    def test_project_skill_name_must_match_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = self.make_repository(directory)
+            skill = root / ".agents/skills/project-memory-learner/SKILL.md"
+            skill.write_text(
+                skill.read_text(encoding="utf-8").replace(
+                    "name: project-memory-learner", "name: another-name"
+                ),
+                encoding="utf-8",
+            )
+            result = validate_repository(root)
+            self.assertTrue(any("must match directory" in item for item in result.errors))
 
     def test_broken_relative_link_is_an_error(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

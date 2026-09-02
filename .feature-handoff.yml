@@ -1,0 +1,27 @@
+version: 1
+configured: true
+
+documents:
+  instructions: AGENTS.md
+  readme: README.md
+  project_status: docs/project/STATUS.md
+  roadmap: docs/project/ROADMAP.md
+  architecture: docs/project/ARCHITECTURE.md
+  features: docs/features
+  adr: docs/project-memory/decisions
+
+verification:
+  build:
+    - python tools/memory_check.py --strict
+  test:
+    - python -m unittest discover -s tests -v
+  lint: []
+  runtime:
+    - python tools/project_memory_loop.py simulate
+
+policy:
+  bootstrap_before_project_changes: true
+  update_after_meaningful_change: true
+  adr_for_architecture_changes: true
+  commit_requires_request: true
+  push_requires_request: true
