@@ -1,0 +1,26 @@
+# Operating-system and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+
+# Obsidian machine-local state
+docs/project-memory/.obsidian/
+
+# Rebuildable knowledge-graph output
+graphify-out/
+
+# Codex local logs
+.codex-log/

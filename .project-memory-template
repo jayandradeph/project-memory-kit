@@ -1,0 +1,2 @@
+This marker identifies the upstream template repository.
+The installer does not copy it into target projects.
