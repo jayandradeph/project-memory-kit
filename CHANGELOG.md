@@ -13,3 +13,7 @@ The format follows Keep a Changelog principles, and releases use semantic versio
 - Decision and known-solution templates.
 - Cross-platform validator, conservative installer, tests, and GitHub Actions workflow.
 - Optional Obsidian and Graphify integration guides.
+
+### Changed
+
+- GitHub workflows use the current Node.js 24-based official action majors.
